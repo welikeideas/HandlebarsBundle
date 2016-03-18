@@ -65,7 +65,7 @@ class HandlebarsEnvironment
         try {
             $phpStr = LightnCandy::compile($source, $this->options);
         } catch (\Exception $e) {
-            var_dump($e);
+            var_dump('Error');
         }
         $this->cache->write($cacheKey, '<?php // ' . $name . PHP_EOL . $phpStr);
 
