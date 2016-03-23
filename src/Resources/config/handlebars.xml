@@ -15,6 +15,7 @@
             <argument type="service" id="handlebars.helper" />
             <argument />
             <argument type="service" id="handlebars.extension.profiler" />
+            <argument type="service" id="templating.view_data_capture"/>
         </service>
         <service id="handlebars.template.paths" class="JaySDe\HandlebarsBundle\Loader\FilesystemLoader">
             <factory service="handlebars.loader.filesystem" method="getPaths" />
