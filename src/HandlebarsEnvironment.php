@@ -10,6 +10,7 @@ namespace JaySDe\HandlebarsBundle;
 use JaySDe\HandlebarsBundle\Cache\Filesystem;
 use JaySDe\HandlebarsBundle\Loader\FilesystemLoader;
 use LightnCandy\LightnCandy;
+use SDC\HandlebarsBundle\DataCapture;
 
 class HandlebarsEnvironment
 {
@@ -31,8 +32,16 @@ class HandlebarsEnvironment
     protected $debug;
     private $profiler;
 
-    public function __construct(FilesystemLoader $loader, HandlebarsHelper $helper, $options = [], HandlebarsProfileExtension $profiler)
-    {
+    /** @var DataCapture */
+    private $viewDataBag = null;
+
+    public function __construct(
+        FilesystemLoader $loader,
+        HandlebarsHelper $helper,
+        $options = [],
+        HandlebarsProfileExtension $profiler,
+        DataCapture $viewDataBag
+    ) {
         $this->loader = $loader;
         $this->options = array_merge([
             'auto_reload' => null,
@@ -54,6 +63,7 @@ class HandlebarsEnvironment
         $this->autoReload = null === $this->options['auto_reload'] ? $this->debug : (bool) $this->options['auto_reload'];
         $this->setCache($this->options['cache']);
         $this->profiler = $profiler;
+        $this->viewDataBag = $viewDataBag;
     }
 
     public function compile($name)
@@ -75,6 +85,7 @@ class HandlebarsEnvironment
     public function render($name, array $context = [])
     {
         $renderer = $this->loadTemplate($name);
+        $context = $this->mixInDataFromGlobalBag($context);
 
         $templateProfile = new \Twig_Profiler_Profile($name, \Twig_Profiler_Profile::TEMPLATE, $name);
         $this->profiler->enter($templateProfile);
@@ -145,5 +156,20 @@ class HandlebarsEnvironment
     public function isAutoReload()
     {
         return $this->autoReload;
+    }
+
+    /**
+     * Brings in data captured outside of controllers for use in
+     * views. Controller can override by using same keys as those set
+     * in global context.
+     *
+     * @param array $parameters as set by controller
+     * @return array
+     */
+    private function mixInDataFromGlobalBag(array $parameters)
+    {
+        $globalData = $this->viewDataBag->all();
+        unset($globalData['original']);
+        return array_replace_recursive($parameters, $globalData);
     }
 }
